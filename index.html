@@ -20,6 +20,11 @@
       button.secondary { background: transparent; color: inherit; }
       .canvas-wrap { margin-top: 16px; display: flex; justify-content: center; }
       canvas { width: 100%; max-width: 960px; aspect-ratio: 16/9; border-radius: 8px; border: 1px dashed rgba(0,0,0,0.25); background: #121216; }
+      .embed body { margin: 0; padding: 0; background: #000; }
+      .embed .container { max-width: none; margin: 0; padding: 0; }
+      .embed .card, .embed h1, .embed .row, .embed .hint { display: none; }
+      .embed .canvas-wrap { margin: 0; }
+      .embed canvas { display: block; width: 100vw; height: 100vh; max-width: none; aspect-ratio: auto; border: none; border-radius: 0; }
       .hint { font-size: 13px; opacity: .8; margin-top: 8px; }
       a { color: #4ea1ff; text-decoration: none; }
     </style>
@@ -62,7 +67,8 @@
         const year = parseInt(u.searchParams.get('year') || '');
         const month = parseInt(u.searchParams.get('month') || '');
         const day = parseInt(u.searchParams.get('day') || '');
-        return { year, month, day };
+        const embed = u.searchParams.get('embed') === '1';
+        return { year, month, day, embed };
       }
 
       function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0); }
@@ -190,6 +196,10 @@
 
       (async function init() {
         const params = parseParams();
+        if (params.embed) {
+          document.documentElement.classList.add('embed');
+          canvas.width = 2560; canvas.height = 1440;
+        }
         const yi = document.getElementById('year');
         const mi = document.getElementById('month');
         const di = document.getElementById('day');
@@ -205,6 +215,9 @@
         document.getElementById('shareBtn').addEventListener('click', shareURL);
 
         await renderImage();
+        if (params.embed) {
+          await renderImage();
+        }
       })();
     </script>
   </body>
