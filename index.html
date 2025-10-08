@@ -1,83 +1,211 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Генератор изображения дня рождения</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" rel="stylesheet">
+    <style>
+      :root { color-scheme: light dark; }
+      html, body { margin: 0; padding: 0; font-family: 'Rubik Bubbles', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+      h1 { font-weight: 700; font-size: 20px; margin: 0 0 16px; }
+      .card { border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 16px; background: rgba(255,255,255,0.04); }
+      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      label { font-size: 14px; opacity: 0.9; }
+      input { padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.2); width: 120px; }
+      button { cursor: pointer; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.2); background: #ffd481; color: #111; font-weight: 600; }
+      button.secondary { background: transparent; color: inherit; }
+      .canvas-wrap { margin-top: 16px; display: flex; justify-content: center; }
+      canvas { width: 100%; max-width: 960px; aspect-ratio: 16/9; border-radius: 8px; border: 1px dashed rgba(0,0,0,0.25); background: #121216; }
+      .hint { font-size: 13px; opacity: .8; margin-top: 8px; }
+      a { color: #4ea1ff; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Генератор изображения: сколько дней до дня рождения</h1>
+      <div class="card">
+        <div class="row" style="gap: 16px;">
+          <div>
+            <label>Год</label><br>
+            <input id="year" type="number" min="1900" max="2100" placeholder="1995">
+          </div>
+          <div>
+            <label>Месяц</label><br>
+            <input id="month" type="number" min="1" max="12" placeholder="1-12">
+          </div>
+          <div>
+            <label>День</label><br>
+            <input id="day" type="number" min="1" max="31" placeholder="1-31">
+          </div>
+        </div>
+        <div class="row" style="margin-top: 12px; gap: 12px;">
+          <button id="renderBtn">Сгенерировать</button>
+          <button id="downloadBtn" class="secondary">Скачать JPEG</button>
+          <button id="shareBtn" class="secondary">Поделиться ссылкой</button>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="c" width="2560" height="1440"></canvas>
+        </div>
+      </div>
+    </div>
 
-        <!DOCTYPE html>
-        <html lang="ru">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>био</title>
-            <style>
-                body {
-                    background-image: url("https://0x0.st/s/BYUCRyScF7joBPlyEdE3yg/8H5A.jpg");
-                    background-size: cover;
-                    background-repeat: no-repeat;
-                    background-position: center;
-                    background-color: black;
-                    margin: 0;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    font-family: monospace;
-                    color: white;
-                    transition: background-image 0.5s ease;
-                }
+    <script>
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
 
-               .content-container {
-                        background-color: rgba(255, 255, 255, 0.05);
-                        padding: 15px;
-                        border-radius: 15px;
-                        border: 1px solid #666666;
-                        margin: 0 15px;
-                        position: relative;
-                        backdrop-filter: blur(10px);
-                        width: 700px;
-                        overflow: hidden;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        text-align: center;
-                        box-shadow: 0 0 5px black;
-                    }
-                .avatar {
-                        width: 150px;
-                        height: 150px;
-                        border-radius: 10px;
-                        object-fit: cover;
-                        margin-bottom: 20px;
-                        border: 1px solid #666666;
-                        box-shadow: 0 0 5px black;
-                }
-                 h2 {
-                        margin-bottom: 10px;
-                        font-size: 1.8em;
-                        text-shadow: 0 0 5px black;
-                    }
-                 p {
-                      white-space: pre-line;
-                       text-shadow: 0 0 5px black;
-                      font-size: 1.1em;
-                  }
-            </style>
-        </head>
-        <body>
-            <div class="content-container">
-                <img src="https://0x0.st/s/BYUCRyScF7joBPlyEdE3yg/8H5A.jpg" alt="Аватар" class="avatar">
-                <h2>Arion</h2>
-                <p>About me:
-Nickname: Arion,Arioncheck
-Hobbie: Coding
-Country: Russia
+      function parseParams() {
+        const u = new URL(location.href);
+        const year = parseInt(u.searchParams.get('year') || '');
+        const month = parseInt(u.searchParams.get('month') || '');
+        const day = parseInt(u.searchParams.get('day') || '');
+        return { year, month, day };
+      }
 
-Active in these chats:
-🍇 GrapeCrack | Chat 🍇
-Hikka -offtop-chat
+      function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0); }
+      function safeDate(y, m, d) {
+        try {
+          if (m === 2 && d === 29 && !isLeap(y)) return new Date(y, 1, 28);
+          return new Date(y, m - 1, d);
+        } catch { return null; }
+      }
 
-Userbot:
-This is Hikka
+      function nextBirthday(month, day, today = new Date()) {
+        const y = today.getFullYear();
+        let candidate = safeDate(y, month, day);
+        if (!candidate) return null;
+        if (candidate.setHours(0,0,0,0) < today.setHours(0,0,0,0)) {
+          candidate = safeDate(y + 1, month, day);
+        }
+        return candidate;
+      }
 
-I play these games:
-Dota 2, DDNet</p>
-            </div>
-        </body>
-        </html>
-        
+      function daysUntil(year, month, day, today = new Date()) {
+        const target = nextBirthday(month, day, new Date(today));
+        if (!target) return null;
+        const ms = target.setHours(0,0,0,0) - today.setHours(0,0,0,0);
+        return Math.round(ms / 86400000);
+      }
+
+      function drawBackground() {
+        const w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, w, h);
+
+        const flakes = 320; 
+        for (let i = 0; i < flakes; i++) {
+          const x = Math.random() * w;
+          const y = Math.random() * h;
+          const r = 1.5 + Math.random() * 3.5; 
+          const alpha = 0.25 + Math.random() * 0.6; 
+          const glow = 2 + Math.random() * 10; 
+
+          ctx.save();
+          ctx.shadowBlur = glow;
+          ctx.shadowColor = `rgba(255,140,0,${Math.min(0.9, alpha + 0.2)})`; 
+          ctx.fillStyle = `rgba(255,140,0,${alpha})`;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawText(days) {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+
+        const title = 'Дней до дня рождения';
+        const valueText = `${days} дней`;
+
+        const titleFont = '96px "Rubik Bubbles", sans-serif';
+        const valueFont = '240px "Rubik Bubbles", sans-serif';
+
+        ctx.font = titleFont;
+        const titleMetrics = ctx.measureText(title);
+        const titleHeight = (titleMetrics.actualBoundingBoxAscent || 100) + (titleMetrics.actualBoundingBoxDescent || 0);
+
+        ctx.font = valueFont;
+        const valueMetrics = ctx.measureText(valueText);
+        const valueHeight = (valueMetrics.actualBoundingBoxAscent || 280) + (valueMetrics.actualBoundingBoxDescent || 0);
+
+        const gap = 36; 
+        const totalHeight = titleHeight + gap + valueHeight;
+        const startY = (canvas.height - totalHeight) / 2 + titleHeight; 
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = titleFont;
+        ctx.fillText(title, canvas.width / 2, startY);
+
+        ctx.font = valueFont;
+        ctx.fillText(valueText, canvas.width / 2, startY + gap + valueHeight);
+      }
+
+      async function renderImage() {
+        drawBackground();
+        await document.fonts.ready; 
+
+        const y = parseInt(document.getElementById('year').value);
+        const m = parseInt(document.getElementById('month').value);
+        const d = parseInt(document.getElementById('day').value);
+        if (!y || !m || !d) {
+          drawText('—');
+          return;
+        }
+        const left = daysUntil(y, m, d);
+        drawText(left == null ? '—' : left);
+      }
+
+      function downloadJPEG() {
+        const a = document.createElement('a');
+        a.download = 'birthday_days_left_2k.jpg';
+        a.href = canvas.toDataURL('image/jpeg', 0.95);
+        a.click();
+      }
+
+      function updateURL() {
+        const y = document.getElementById('year').value;
+        const m = document.getElementById('month').value;
+        const d = document.getElementById('day').value;
+        const u = new URL(location.href);
+        if (y) u.searchParams.set('year', y); else u.searchParams.delete('year');
+        if (m) u.searchParams.set('month', m); else u.searchParams.delete('month');
+        if (d) u.searchParams.set('day', d); else u.searchParams.delete('day');
+        history.replaceState(null, '', u);
+      }
+
+      function shareURL() {
+        const u = new URL(location.href);
+        if (navigator.share) {
+          navigator.share({ title: document.title, url: u.toString() }).catch(()=>{});
+        } else {
+          navigator.clipboard.writeText(u.toString()).catch(()=>{});
+          alert('Ссылка скопирована в буфер обмена');
+        }
+      }
+
+      (async function init() {
+        const params = parseParams();
+        const yi = document.getElementById('year');
+        const mi = document.getElementById('month');
+        const di = document.getElementById('day');
+        if (Number.isFinite(params.year)) yi.value = params.year;
+        if (Number.isFinite(params.month)) mi.value = params.month;
+        if (Number.isFinite(params.day)) di.value = params.day;
+
+        document.getElementById('renderBtn').addEventListener('click', async () => {
+          updateURL();
+          await renderImage();
+        });
+        document.getElementById('downloadBtn').addEventListener('click', downloadJPEG);
+        document.getElementById('shareBtn').addEventListener('click', shareURL);
+
+        await renderImage();
+      })();
+    </script>
+  </body>
+  </html>
